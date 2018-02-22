@@ -38,11 +38,14 @@ import org.junit.platform.launcher.PostDiscoveryFilter;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import static org.gradle.api.internal.tasks.testing.junit.JUnitTestClassExecutor.isNestedClassInsideEnclosedRunner;
 import static org.gradle.api.internal.tasks.testing.junitplatform.VintageTestNameAdapter.*;
 import static org.junit.platform.launcher.EngineFilter.excludeEngines;
 import static org.junit.platform.launcher.EngineFilter.includeEngines;
@@ -83,9 +86,10 @@ public class JUnitPlatformTestClassProcessor extends AbstractJUnitTestClassProce
         @Override
         public void execute(String testClassName) {
             Class<?> klass = loadClass(testClassName);
-            if (isTopClass(klass)) {
-                testClasses.add(klass);
+            if (isInnerClassAnnotatedWithNested(klass) || isNestedClassInsideEnclosedRunner(klass)) {
+                return;
             }
+            testClasses.add(klass);
         }
 
         private void processAllTestClasses() {
@@ -93,11 +97,14 @@ public class JUnitPlatformTestClassProcessor extends AbstractJUnitTestClassProce
             launcher.registerTestExecutionListeners(new JUnitPlatformTestExecutionListener(resultProcessor, clock, idGenerator, executionListener));
             launcher.execute(createLauncherDiscoveryRequest(testClasses));
         }
-
     }
 
-    private boolean isTopClass(Class<?> klass) {
-        return klass.getEnclosingClass() == null;
+    private boolean isInnerClassAnnotatedWithNested(Class<?> klass) {
+        if (klass.getEnclosingClass() == null) {
+            return false;
+        }
+        Annotation[] annotations = klass.getAnnotations();
+        return Stream.of(annotations).anyMatch(annotation -> "org.junit.jupiter.api.Nested".equals(annotation.annotationType().getName()));
     }
 
     private Class<?> loadClass(String className) {
