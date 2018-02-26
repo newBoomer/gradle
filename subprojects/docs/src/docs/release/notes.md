@@ -74,8 +74,8 @@ You can find more information on [test grouping and filtering in the Java Plugin
 To enable `JUnit Jupiter` support, add the following dependencies:
 
     dependencies {
-        testImplementation 'org.junit.jupiter:junit-jupiter-api:5.0.3'
-        testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.0.3'
+        testImplementation 'org.junit.jupiter:junit-jupiter-api:5.1.0'
+        testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.1.0'
     }      
 
 Put your first `Jupiter` test into `src/test/java/foo/bar`:
